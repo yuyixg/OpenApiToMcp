@@ -1,6 +1,9 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.OpenApi;
 using OpenApiToMcp.Core.Execution;
 using OpenApiToMcp.Core.Models;
@@ -9,6 +12,18 @@ namespace OpenApiToMcp.Tests;
 
 public class ApiClientTests
 {
+    private static ICredentialProvider CreateNoOpCredentialProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging(b => b.ClearProviders());
+        services.AddHttpClient("OpenApiToMcp");
+        var sp = services.BuildServiceProvider();
+        return new DefaultCredentialProvider(
+            new OpenApiToMcpOptions(),
+            sp.GetRequiredService<IHttpClientFactory>(),
+            NullLogger<DefaultCredentialProvider>.Instance);
+    }
+
     private static ApiCallInfo CreateCallInfo(
         string method = "GET",
         string path = "/test",
@@ -30,7 +45,7 @@ public class ApiClientTests
     public async Task ExecuteAsync_ReturnsError_WhenMissingMethod()
     {
         var info = CreateCallInfo(method: "");
-        var client = new ApiClient(new HttpClient(), new OpenApiToMcpOptions());
+        var client = new ApiClient(new HttpClient(), new OpenApiToMcpOptions(), CreateNoOpCredentialProvider());
 
         var result = await client.ExecuteAsync(info, null);
 
@@ -43,7 +58,7 @@ public class ApiClientTests
     public async Task ExecuteAsync_ReturnsError_WhenMissingPathTemplate()
     {
         var info = CreateCallInfo(path: "");
-        var client = new ApiClient(new HttpClient(), new OpenApiToMcpOptions());
+        var client = new ApiClient(new HttpClient(), new OpenApiToMcpOptions(), CreateNoOpCredentialProvider());
 
         var result = await client.ExecuteAsync(info, null);
 
@@ -56,7 +71,7 @@ public class ApiClientTests
     public async Task ExecuteAsync_ReturnsError_WhenMissingServerUrl()
     {
         var info = CreateCallInfo(serverUrl: "");
-        var client = new ApiClient(new HttpClient(), new OpenApiToMcpOptions());
+        var client = new ApiClient(new HttpClient(), new OpenApiToMcpOptions(), CreateNoOpCredentialProvider());
 
         var result = await client.ExecuteAsync(info, null);
 
@@ -74,7 +89,7 @@ public class ApiClientTests
                 new OpenApiParameter { Name = "id", Required = true, In = ParameterLocation.Path }
             });
 
-        var client = new ApiClient(new HttpClient(), new OpenApiToMcpOptions());
+        var client = new ApiClient(new HttpClient(), new OpenApiToMcpOptions(), CreateNoOpCredentialProvider());
         var input = JsonSerializer.SerializeToElement(new { });
 
         var result = await client.ExecuteAsync(info, input);
@@ -91,7 +106,7 @@ public class ApiClientTests
             method: "POST",
             requestBody: new OpenApiRequestBody { Required = true });
 
-        var client = new ApiClient(new HttpClient(), new OpenApiToMcpOptions());
+        var client = new ApiClient(new HttpClient(), new OpenApiToMcpOptions(), CreateNoOpCredentialProvider());
 
         var result = await client.ExecuteAsync(info, null);
 
@@ -105,7 +120,7 @@ public class ApiClientTests
     {
         // Use a non-routable address to trigger network error
         var info = CreateCallInfo(serverUrl: "http://192.0.2.1:1");
-        var client = new ApiClient(new HttpClient { Timeout = TimeSpan.FromSeconds(2) }, new OpenApiToMcpOptions());
+        var client = new ApiClient(new HttpClient { Timeout = TimeSpan.FromSeconds(2) }, new OpenApiToMcpOptions(), CreateNoOpCredentialProvider());
 
         var result = await client.ExecuteAsync(info, null);
 
@@ -124,7 +139,7 @@ public class ApiClientTests
         {
             CustomHeaders = new Dictionary<string, string> { ["X-Custom"] = "test" }
         };
-        var client = new ApiClient(new HttpClient { Timeout = TimeSpan.FromSeconds(1) }, options);
+        var client = new ApiClient(new HttpClient { Timeout = TimeSpan.FromSeconds(1) }, options, CreateNoOpCredentialProvider());
 
         var result = await client.ExecuteAsync(info, null);
 
@@ -137,7 +152,7 @@ public class ApiClientTests
     {
         var info = CreateCallInfo(serverUrl: "http://192.0.2.1:1");
         var options = new OpenApiToMcpOptions { DisableXMcp = true };
-        var client = new ApiClient(new HttpClient { Timeout = TimeSpan.FromSeconds(1) }, options);
+        var client = new ApiClient(new HttpClient { Timeout = TimeSpan.FromSeconds(1) }, options, CreateNoOpCredentialProvider());
 
         var result = await client.ExecuteAsync(info, null);
         Assert.False(result.Success);

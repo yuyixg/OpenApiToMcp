@@ -28,6 +28,7 @@ public static class McpServerBuilderExtensions
         var options = sp.GetRequiredService<IOptions<OpenApiToMcpOptions>>().Value;
         var parser = sp.GetRequiredService<IOpenApiSpecLoader>();
         var mapper = sp.GetRequiredService<IOperationMapper>();
+        var credentialProvider = sp.GetRequiredService<ICredentialProvider>();
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("OpenApiToMcp");
 
         var doc = parser.LoadAndProcessAsync(options).GetAwaiter().GetResult();
@@ -43,7 +44,7 @@ public static class McpServerBuilderExtensions
         var tools = new List<McpServerTool>();
         foreach (var op in mappedOps)
         {
-            tools.Add(new OpenApiMcpServerTool(op, options, httpClientFactory));
+            tools.Add(new OpenApiMcpServerTool(op, options, httpClientFactory, credentialProvider));
         }
 
         logger.LogInformation("Created {Count} MCP tools from OpenAPI spec.", tools.Count);
@@ -66,6 +67,7 @@ public static class McpServerBuilderExtensions
         var mapper = sp.GetRequiredService<IOperationMapper>();
         var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("OpenApiToMcp");
+        var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
 
         if (config.Endpoints.Count == 0)
         {
@@ -99,6 +101,7 @@ public static class McpServerBuilderExtensions
                     ExcludePatterns = endpoint.ExcludePatterns,
                     SecurityCredentials = endpoint.SecurityCredentials,
                     ApiKey = endpoint.ApiKey,
+                    OAuth2Clients = endpoint.OAuth2Clients,
                     CustomHeaders = endpoint.CustomHeaders,
                     DisableXMcp = endpoint.DisableXMcp
                 };
@@ -113,10 +116,16 @@ public static class McpServerBuilderExtensions
                     continue;
                 }
 
+                // Each endpoint gets its own credential provider with its own options
+                var credProvider = new DefaultCredentialProvider(
+                    options,
+                    httpClientFactory,
+                    loggerFactory.CreateLogger<DefaultCredentialProvider>());
+
                 var tools = new List<McpServerTool>();
                 foreach (var op in mappedOps)
                 {
-                    tools.Add(new OpenApiMcpServerTool(op, options, httpClientFactory));
+                    tools.Add(new OpenApiMcpServerTool(op, options, httpClientFactory, credProvider));
                 }
 
                 endpointTools[endpoint.Name] = tools;
@@ -210,12 +219,18 @@ internal class OpenApiMcpServerTool : McpServerTool
     private readonly MappedOperation _operation;
     private readonly OpenApiToMcpOptions _options;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ICredentialProvider _credentialProvider;
 
-    public OpenApiMcpServerTool(MappedOperation operation, OpenApiToMcpOptions options, IHttpClientFactory httpClientFactory)
+    public OpenApiMcpServerTool(
+        MappedOperation operation,
+        OpenApiToMcpOptions options,
+        IHttpClientFactory httpClientFactory,
+        ICredentialProvider credentialProvider)
     {
         _operation = operation;
         _options = options;
         _httpClientFactory = httpClientFactory;
+        _credentialProvider = credentialProvider;
 
         var toolDef = operation.ToolInfo;
 
@@ -264,7 +279,7 @@ internal class OpenApiMcpServerTool : McpServerTool
         }
 
         var httpClient = _httpClientFactory.CreateClient(ApiClient.HttpClientName);
-        var apiClient = new ApiClient(httpClient, _options);
+        var apiClient = new ApiClient(httpClient, _options, _credentialProvider);
         // Clone input to avoid issues with JsonSerializerOptions pooled buffer padding
         JsonElement? clonedInput = null;
         if (input is { } inp)

@@ -47,6 +47,12 @@ public class OpenApiToMcpOptions
     public string? SecuritySchemeName { get; set; }
 
     /// <summary>
+    /// OAuth2 client credentials configurations keyed by security scheme name.
+    /// When a scheme matches an entry here, the provider will exchange client credentials for a token automatically.
+    /// </summary>
+    public Dictionary<string, OAuth2ClientConfig> OAuth2Clients { get; set; } = new();
+
+    /// <summary>
     /// Custom HTTP headers to include in all outgoing API requests.
     /// </summary>
     public Dictionary<string, string> CustomHeaders { get; set; } = new();

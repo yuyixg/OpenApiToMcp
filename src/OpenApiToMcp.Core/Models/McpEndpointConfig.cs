@@ -51,6 +51,11 @@ public class McpEndpointConfig
     public string? ApiKey { get; set; }
 
     /// <summary>
+    /// OAuth2 client credentials configurations keyed by security scheme name.
+    /// </summary>
+    public Dictionary<string, OAuth2ClientConfig> OAuth2Clients { get; set; } = new();
+
+    /// <summary>
     /// Custom HTTP headers to include in all outgoing API requests for this endpoint.
     /// </summary>
     public Dictionary<string, string> CustomHeaders { get; set; } = new();

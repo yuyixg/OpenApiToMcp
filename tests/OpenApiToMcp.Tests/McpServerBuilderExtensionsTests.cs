@@ -1,9 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Reader;
 using OpenApiToMcp.AspNetCore;
+using OpenApiToMcp.Core.Execution;
 using OpenApiToMcp.Core.Mapping;
 using OpenApiToMcp.Core.Models;
 using OpenApiToMcp.Core.Parsing;
@@ -14,13 +17,19 @@ public class McpServerBuilderExtensionsTests
 {
     private readonly IOperationMapper _mapper = TestHelpers.CreateMapper();
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ICredentialProvider _credentialProvider;
 
     public McpServerBuilderExtensionsTests()
     {
         var services = new ServiceCollection();
+        services.AddLogging(b => b.ClearProviders());
         services.AddHttpClient("OpenApiToMcp");
         var sp = services.BuildServiceProvider();
         _httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+        _credentialProvider = new DefaultCredentialProvider(
+            new OpenApiToMcpOptions(),
+            _httpClientFactory,
+            NullLogger<DefaultCredentialProvider>.Instance);
     }
 
     private static async Task<OpenApiDocument> LoadFixtureAsync(string name)
@@ -44,7 +53,7 @@ public class McpServerBuilderExtensionsTests
             .GetTypes()
             .First(t => t.Name == "OpenApiMcpServerTool");
 
-        var tool = Activator.CreateInstance(toolType, listPets, options, _httpClientFactory);
+        var tool = Activator.CreateInstance(toolType, listPets, options, _httpClientFactory, _credentialProvider);
         var protocolTool = toolType.GetProperty("ProtocolTool")!.GetValue(tool) as ModelContextProtocol.Protocol.Tool;
 
         Assert.NotNull(protocolTool);
@@ -64,7 +73,7 @@ public class McpServerBuilderExtensionsTests
             .GetTypes()
             .First(t => t.Name == "OpenApiMcpServerTool");
 
-        var tool = Activator.CreateInstance(toolType, getPet, options, _httpClientFactory);
+        var tool = Activator.CreateInstance(toolType, getPet, options, _httpClientFactory, _credentialProvider);
         var protocolTool = toolType.GetProperty("ProtocolTool")!.GetValue(tool) as ModelContextProtocol.Protocol.Tool;
 
         Assert.NotNull(protocolTool);
@@ -87,7 +96,7 @@ public class McpServerBuilderExtensionsTests
             .GetTypes()
             .First(t => t.Name == "OpenApiMcpServerTool");
 
-        var tool = Activator.CreateInstance(toolType, getPet, options, _httpClientFactory);
+        var tool = Activator.CreateInstance(toolType, getPet, options, _httpClientFactory, _credentialProvider);
         var protocolTool = toolType.GetProperty("ProtocolTool")!.GetValue(tool) as ModelContextProtocol.Protocol.Tool;
 
         Assert.NotNull(protocolTool);
@@ -107,7 +116,7 @@ public class McpServerBuilderExtensionsTests
             .GetTypes()
             .First(t => t.Name == "OpenApiMcpServerTool");
 
-        var tool = Activator.CreateInstance(toolType, listPets, options, _httpClientFactory);
+        var tool = Activator.CreateInstance(toolType, listPets, options, _httpClientFactory, _credentialProvider);
         var protocolTool = toolType.GetProperty("ProtocolTool")!.GetValue(tool) as ModelContextProtocol.Protocol.Tool;
 
         Assert.NotNull(protocolTool);

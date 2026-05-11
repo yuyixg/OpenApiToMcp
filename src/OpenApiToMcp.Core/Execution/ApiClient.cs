@@ -15,11 +15,13 @@ public class ApiClient : IApiClient
 
     private readonly HttpClient _httpClient;
     private readonly OpenApiToMcpOptions _options;
+    private readonly ICredentialProvider _credentialProvider;
 
-    public ApiClient(HttpClient httpClient, OpenApiToMcpOptions options)
+    public ApiClient(HttpClient httpClient, OpenApiToMcpOptions options, ICredentialProvider credentialProvider)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        _credentialProvider = credentialProvider ?? throw new ArgumentNullException(nameof(credentialProvider));
     }
 
     public virtual async Task<ApiResponse> ExecuteAsync(ApiCallInfo details, JsonElement? mcpInput, CancellationToken ct = default)
@@ -70,7 +72,7 @@ public class ApiClient : IApiClient
         }
 
         // 7. Apply security (uriBuilder is passed in so security can modify query)
-        ApplySecurity(request, uriBuilder, details.SecurityRequirements, details.SecuritySchemes);
+        await ApplySecurityAsync(request, uriBuilder, details.SecurityRequirements, details.SecuritySchemes, ct);
 
         // Update RequestUri again because ApplySecurity may have modified the query
         request.RequestUri = uriBuilder.Uri;
@@ -150,11 +152,12 @@ public class ApiClient : IApiClient
         return true;
     }
 
-    private void ApplySecurity(
+    private async Task ApplySecurityAsync(
         HttpRequestMessage request,
         UriBuilder uriBuilder,
         IList<OpenApiSecurityRequirement>? requirements,
-        IDictionary<string, OpenApiSecurityScheme>? schemes)
+        IDictionary<string, OpenApiSecurityScheme>? schemes,
+        CancellationToken ct)
     {
         if (requirements == null || requirements.Count == 0 || schemes == null)
             return;
@@ -173,15 +176,14 @@ public class ApiClient : IApiClient
                     break;
                 }
 
-                string? credential = null;
-                _options.SecurityCredentials?.TryGetValue(schemeName, out credential);
-                credential ??= _options.ApiKey;
-
-                if (string.IsNullOrEmpty(credential))
+                var credResult = await _credentialProvider.GetCredentialAsync(schemeName, scheme, ct);
+                if (!credResult.Success || string.IsNullOrEmpty(credResult.Token))
                 {
                     allSatisfied = false;
                     break;
                 }
+
+                var credential = credResult.Token;
 
                 switch (scheme.Type)
                 {

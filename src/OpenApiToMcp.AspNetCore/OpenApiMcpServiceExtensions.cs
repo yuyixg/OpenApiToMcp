@@ -14,7 +14,7 @@ namespace OpenApiToMcp.AspNetCore;
 public static class OpenApiMcpServiceExtensions
 {
     /// <summary>
-    /// Registers OpenApiToMcp core services (parser, API client, mapper, overlay applier) with a single-endpoint configuration.
+    /// Registers OpenApiToMcp core services (parser, API client, mapper, overlay applier, credential provider) with a single-endpoint configuration.
     /// All service types are registered as their interfaces, allowing custom implementations to replace them.
     /// </summary>
     public static IServiceCollection AddOpenApiMcp(
@@ -25,6 +25,7 @@ public static class OpenApiMcpServiceExtensions
         services.AddSingleton<IOverlayApplier, OverlayApplier>();
         services.AddSingleton<IOpenApiSpecLoader, OpenApiParser>();
         services.AddSingleton<IOperationMapper, OperationMapper>();
+        services.AddSingleton<ICredentialProvider, DefaultCredentialProvider>();
         services.AddHttpClient(ApiClient.HttpClientName);
         return services;
     }
@@ -47,6 +48,8 @@ public static class OpenApiMcpServiceExtensions
     /// <summary>
     /// Registers OpenApiToMcp for multi-endpoint mode using a pre-built config object.
     /// Each endpoint in the config maps to an independent MCP service at a named route.
+    /// ICredentialProvider is NOT registered here — each endpoint creates its own
+    /// DefaultCredentialProvider in WithMultiEndpointOpenApiTools.
     /// </summary>
     public static IServiceCollection AddOpenApiMcp(
         this IServiceCollection services,
