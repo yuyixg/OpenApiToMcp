@@ -8,7 +8,7 @@ namespace OpenApiToMcp.Tests;
 
 public class OperationMapperTests
 {
-    private readonly OperationMapper _mapper = TestHelpers.CreateMapper();
+    private readonly IOperationMapper _mapper = TestHelpers.CreateMapper();
 
     private static async Task<OpenApiDocument> LoadFixtureAsync(string name)
     {

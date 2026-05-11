@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenApiToMcp.Core.Execution;
 using OpenApiToMcp.Core.Mapping;
 using OpenApiToMcp.Core.Models;
+using OpenApiToMcp.Core.Overlays;
 using OpenApiToMcp.Core.Parsing;
 
 namespace OpenApiToMcp.AspNetCore;
@@ -13,15 +14,17 @@ namespace OpenApiToMcp.AspNetCore;
 public static class OpenApiMcpServiceExtensions
 {
     /// <summary>
-    /// Registers OpenApiToMcp core services (parser, API client, mapper) with a single-endpoint configuration.
+    /// Registers OpenApiToMcp core services (parser, API client, mapper, overlay applier) with a single-endpoint configuration.
+    /// All service types are registered as their interfaces, allowing custom implementations to replace them.
     /// </summary>
     public static IServiceCollection AddOpenApiMcp(
         this IServiceCollection services,
         Action<OpenApiToMcpOptions> configure)
     {
         services.Configure(configure);
-        services.AddSingleton<OpenApiParser>();
-        services.AddSingleton<OperationMapper>();
+        services.AddSingleton<IOverlayApplier, OverlayApplier>();
+        services.AddSingleton<IOpenApiSpecLoader, OpenApiParser>();
+        services.AddSingleton<IOperationMapper, OperationMapper>();
         services.AddHttpClient(ApiClient.HttpClientName);
         return services;
     }
@@ -50,8 +53,9 @@ public static class OpenApiMcpServiceExtensions
         OpenApiToMcpConfig config)
     {
         services.AddSingleton(config);
-        services.AddSingleton<OpenApiParser>();
-        services.AddSingleton<OperationMapper>();
+        services.AddSingleton<IOverlayApplier, OverlayApplier>();
+        services.AddSingleton<IOpenApiSpecLoader, OpenApiParser>();
+        services.AddSingleton<IOperationMapper, OperationMapper>();
         services.AddHttpClient(ApiClient.HttpClientName);
         return services;
     }

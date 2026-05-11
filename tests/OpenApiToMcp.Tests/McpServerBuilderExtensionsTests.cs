@@ -6,12 +6,13 @@ using Microsoft.OpenApi.Reader;
 using OpenApiToMcp.AspNetCore;
 using OpenApiToMcp.Core.Mapping;
 using OpenApiToMcp.Core.Models;
+using OpenApiToMcp.Core.Parsing;
 
 namespace OpenApiToMcp.Tests;
 
 public class McpServerBuilderExtensionsTests
 {
-    private readonly OperationMapper _mapper = TestHelpers.CreateMapper();
+    private readonly IOperationMapper _mapper = TestHelpers.CreateMapper();
     private readonly IHttpClientFactory _httpClientFactory;
 
     public McpServerBuilderExtensionsTests()

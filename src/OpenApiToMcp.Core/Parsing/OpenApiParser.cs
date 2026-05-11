@@ -12,21 +12,21 @@ namespace OpenApiToMcp.Core.Parsing;
 /// <summary>
 /// Loads, validates, and processes OpenAPI specifications.
 /// </summary>
-public class OpenApiParser
+public class OpenApiParser : IOpenApiSpecLoader
 {
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IOverlayApplier _overlayApplier;
     private readonly ILogger<OpenApiParser> _logger;
 
-    public OpenApiParser(IHttpClientFactory httpClientFactory, ILogger<OpenApiParser> logger)
+    public OpenApiParser(IHttpClientFactory httpClientFactory, IOverlayApplier overlayApplier, ILogger<OpenApiParser> logger)
     {
         _httpClientFactory = httpClientFactory;
+        _overlayApplier = overlayApplier;
         _logger = logger;
     }
 
-    /// <summary>
-    /// Loads and processes an OpenAPI spec: load → validate → apply overlays → return.
-    /// </summary>
-    public async Task<OpenApiDocument> LoadAndProcessAsync(OpenApiToMcpOptions options)
+    /// <inheritdoc/>
+    public virtual async Task<OpenApiDocument> LoadAndProcessAsync(OpenApiToMcpOptions options)
     {
         var doc = await LoadSpecAsync(options.SpecPath);
         ValidateSpec(doc);
@@ -38,8 +38,7 @@ public class OpenApiParser
                 try
                 {
                     var overlayJson = await LoadOverlayAsync(overlayPath);
-                    var applier = new OverlayApplier();
-                    doc = applier.Apply(doc, overlayJson);
+                    doc = _overlayApplier.Apply(doc, overlayJson);
                 }
                 catch (Exception ex)
                 {
@@ -58,10 +57,8 @@ public class OpenApiParser
         return doc;
     }
 
-    /// <summary>
-    /// Loads an OpenAPI document from a file path or HTTP URL.
-    /// </summary>
-    public async Task<OpenApiDocument> LoadSpecAsync(string pathOrUrl)
+    /// <inheritdoc/>
+    public virtual async Task<OpenApiDocument> LoadSpecAsync(string pathOrUrl)
     {
         ReadResult result;
 
@@ -91,10 +88,8 @@ public class OpenApiParser
         return result.Document;
     }
 
-    /// <summary>
-    /// Loads an overlay document as raw JsonNode (for the OverlayApplier).
-    /// </summary>
-    public async Task<JsonNode> LoadOverlayAsync(string pathOrUrl)
+    /// <inheritdoc/>
+    public virtual async Task<JsonNode> LoadOverlayAsync(string pathOrUrl)
     {
         string content;
 
@@ -129,10 +124,8 @@ public class OpenApiParser
             ?? throw new InvalidOperationException($"Failed to parse overlay JSON from '{pathOrUrl}'.");
     }
 
-    /// <summary>
-    /// Validates that the OpenAPI document has the minimum required structure.
-    /// </summary>
-    public static void ValidateSpec(OpenApiDocument doc)
+    /// <inheritdoc/>
+    public virtual void ValidateSpec(OpenApiDocument doc)
     {
         if (doc.Info == null)
             throw new InvalidOperationException("OpenAPI spec is missing the required 'info' section.");

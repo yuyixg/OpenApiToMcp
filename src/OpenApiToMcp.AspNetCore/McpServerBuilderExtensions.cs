@@ -26,8 +26,8 @@ public static class McpServerBuilderExtensions
     {
         var sp = builder.Services.BuildServiceProvider();
         var options = sp.GetRequiredService<IOptions<OpenApiToMcpOptions>>().Value;
-        var parser = sp.GetRequiredService<OpenApiParser>();
-        var mapper = sp.GetRequiredService<OperationMapper>();
+        var parser = sp.GetRequiredService<IOpenApiSpecLoader>();
+        var mapper = sp.GetRequiredService<IOperationMapper>();
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("OpenApiToMcp");
 
         var doc = parser.LoadAndProcessAsync(options).GetAwaiter().GetResult();
@@ -62,8 +62,8 @@ public static class McpServerBuilderExtensions
     {
         var sp = builder.Services.BuildServiceProvider();
         var config = sp.GetRequiredService<OpenApiToMcpConfig>();
-        var parser = sp.GetRequiredService<OpenApiParser>();
-        var mapper = sp.GetRequiredService<OperationMapper>();
+        var parser = sp.GetRequiredService<IOpenApiSpecLoader>();
+        var mapper = sp.GetRequiredService<IOperationMapper>();
         var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
         var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("OpenApiToMcp");
 

@@ -9,7 +9,7 @@ namespace OpenApiToMcp.Core.Mapping;
 /// <summary>
 /// Maps OpenAPI operations to MCP tool definitions.
 /// </summary>
-public class OperationMapper
+public class OperationMapper : IOperationMapper
 {
     private readonly ILogger<OperationMapper> _logger;
 
@@ -23,10 +23,8 @@ public class OperationMapper
         "get", "put", "post", "delete", "options", "head", "patch", "trace"
     };
 
-    /// <summary>
-    /// Maps all matching OpenAPI operations to MCP tool definitions.
-    /// </summary>
-    public List<MappedOperation> MapToMcpTools(OpenApiDocument doc, OpenApiToMcpOptions options)
+    /// <inheritdoc/>
+    public virtual List<MappedOperation> MapToMcpTools(OpenApiDocument doc, OpenApiToMcpOptions options)
     {
         var results = new List<MappedOperation>();
         var globalSecurity = doc.Security;

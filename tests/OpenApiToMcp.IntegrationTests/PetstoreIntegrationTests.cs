@@ -23,15 +23,16 @@ public class PetstoreIntegrationTests
 
     private const string BaseUrl = "https://petstore3.swagger.io/api/v3";
 
-    private static (OpenApiParser Parser, OperationMapper Mapper) CreateServices()
+    private static (IOpenApiSpecLoader Parser, IOperationMapper Mapper) CreateServices()
     {
         var services = new ServiceCollection();
         services.AddLogging(b => b.ClearProviders());
         services.AddHttpClient("OpenApiToMcp");
-        services.AddSingleton<OpenApiParser>();
-        services.AddSingleton<OperationMapper>();
+        services.AddSingleton<IOverlayApplier, OverlayApplier>();
+        services.AddSingleton<IOpenApiSpecLoader, OpenApiParser>();
+        services.AddSingleton<IOperationMapper, OperationMapper>();
         var sp = services.BuildServiceProvider();
-        return (sp.GetRequiredService<OpenApiParser>(), sp.GetRequiredService<OperationMapper>());
+        return (sp.GetRequiredService<IOpenApiSpecLoader>(), sp.GetRequiredService<IOperationMapper>());
     }
 
     private static async Task<OpenApiDocument> LoadPetstoreAsync()
@@ -60,7 +61,8 @@ public class PetstoreIntegrationTests
     public async Task ValidateSpec_Petstore_Passes()
     {
         var doc = await LoadPetstoreAsync();
-        OpenApiParser.ValidateSpec(doc); // Should not throw
+        var (parser, _) = CreateServices();
+        parser.ValidateSpec(doc); // Should not throw
     }
 
     [Fact]

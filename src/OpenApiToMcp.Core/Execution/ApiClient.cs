@@ -9,7 +9,7 @@ namespace OpenApiToMcp.Core.Execution;
 /// <summary>
 /// Executes HTTP API calls based on MCP tool invocation parameters.
 /// </summary>
-public class ApiClient
+public class ApiClient : IApiClient
 {
     public const string HttpClientName = "OpenApiToMcp";
 
@@ -22,7 +22,7 @@ public class ApiClient
         _options = options ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public async Task<ApiResponse> ExecuteAsync(ApiCallInfo details, JsonElement? mcpInput, CancellationToken ct = default)
+    public virtual async Task<ApiResponse> ExecuteAsync(ApiCallInfo details, JsonElement? mcpInput, CancellationToken ct = default)
     {
         // 1. 基础验证
         if (string.IsNullOrWhiteSpace(details.Method))

@@ -8,9 +8,9 @@ namespace OpenApiToMcp.Core.Overlays;
 /// <summary>
 /// Applies OpenAPI Overlay Specification 1.0.0 actions to an OpenAPI document.
 /// </summary>
-public class OverlayApplier
+public class OverlayApplier : IOverlayApplier
 {
-    public OpenApiDocument Apply(OpenApiDocument target, JsonNode overlayDoc)
+    public virtual OpenApiDocument Apply(OpenApiDocument target, JsonNode overlayDoc)
     {
         if (overlayDoc is not JsonObject root)
             throw new ArgumentException("Overlay must be a JSON object.");

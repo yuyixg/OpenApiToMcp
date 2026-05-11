@@ -6,7 +6,7 @@ namespace OpenApiToMcp.Tests;
 
 public class OpenApiParserTests
 {
-    private readonly OpenApiParser _parser = TestHelpers.CreateParser();
+    private readonly IOpenApiSpecLoader _parser = TestHelpers.CreateParser();
 
     private static string FixturePath(string name)
         => Path.Combine(AppContext.BaseDirectory, "Fixtures", name);
@@ -33,7 +33,7 @@ public class OpenApiParserTests
     {
         var doc = new OpenApiDocument();
 
-        Assert.Throws<InvalidOperationException>(() => OpenApiParser.ValidateSpec(doc));
+        Assert.Throws<InvalidOperationException>(() => _parser.ValidateSpec(doc));
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class OpenApiParserTests
             Paths = new OpenApiPaths()
         };
 
-        Assert.Throws<InvalidOperationException>(() => OpenApiParser.ValidateSpec(doc));
+        Assert.Throws<InvalidOperationException>(() => _parser.ValidateSpec(doc));
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class OpenApiParserTests
             }
         };
 
-        Assert.Throws<InvalidOperationException>(() => OpenApiParser.ValidateSpec(doc));
+        Assert.Throws<InvalidOperationException>(() => _parser.ValidateSpec(doc));
     }
 
     [Fact]
