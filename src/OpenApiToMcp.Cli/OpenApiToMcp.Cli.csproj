@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>openapi-to-mcp</ToolCommandName>
+    <PackageId>OpenApiToMcp.Cli</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>OpenApiToMcp</Authors>
+    <Description>CLI tool for running an MCP server from an OpenAPI specification. Converts OpenAPI operations into MCP tools that can be called by AI assistants.</Description>
+    <PackageTags>openapi;mcp;model-context-protocol;cli;ai;tools</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenApiToMcp.AspNetCore\OpenApiToMcp.AspNetCore.csproj" />
+    <PackageReference Include="ModelContextProtocol" Version="1.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
