@@ -24,7 +24,7 @@ public class ApiClient : IApiClient
 
     public virtual async Task<ApiResponse> ExecuteAsync(ApiCallInfo details, JsonElement? mcpInput, CancellationToken ct = default)
     {
-        // 1. 基础验证
+        // 1. Basic validation
         if (string.IsNullOrWhiteSpace(details.Method))
             return new ApiResponse { Success = false, StatusCode = 400, Error = "Missing HTTP method" };
         if (string.IsNullOrWhiteSpace(details.PathTemplate))
@@ -34,13 +34,13 @@ public class ApiClient : IApiClient
 
         var input = ParseMcpInput(mcpInput);
 
-        // 2. 解析参数并构建请求数据
+        // 2. Parse parameters and build request data
         if (!TryBuildRequestData(details, input, out var urlPath, out var queryParams, out var headers, out var bodyData, out var errorResponse))
         {
             return errorResponse!;
         }
 
-        // 3. 构建安全的 UriBuilder
+        // 3. Build UriBuilder
         var baseUrl = details.ServerUrl.TrimEnd('/');
         var relativePath = urlPath.TrimStart('/');
         var uriBuilder = new UriBuilder($"{baseUrl}/{relativePath}");
@@ -50,10 +50,10 @@ public class ApiClient : IApiClient
             AppendQueryParameter(uriBuilder, qp.Key, qp.Value);
         }
 
-        // 4. 初始化 HttpRequestMessage 并确保释放 (using)
+        // 4. Initialize HttpRequestMessage with using for disposal
         using var request = new HttpRequestMessage(new HttpMethod(details.Method), uriBuilder.Uri);
 
-        // 5. 填充 Headers
+        // 5. Set headers
         foreach (var h in headers)
             request.Headers.TryAddWithoutValidation(h.Key, h.Value);
 
@@ -63,19 +63,19 @@ public class ApiClient : IApiClient
         if (!_options.DisableXMcp)
             request.Headers.TryAddWithoutValidation("X-MCP", "1");
 
-        // 6. 填充 Body
+        // 6. Set body
         if (bodyData.HasValue)
         {
             request.Content = new StringContent(bodyData.Value.Content, Encoding.UTF8, bodyData.Value.ContentType);
         }
 
-        // 7. 应用安全策略（传入 uriBuilder 以便安全地修改 Query）
+        // 7. Apply security (uriBuilder is passed in so security can modify query)
         ApplySecurity(request, uriBuilder, details.SecurityRequirements, details.SecuritySchemes);
 
-        // 再次更新 RequestUri，因为 ApplySecurity 可能修改了 Query
+        // Update RequestUri again because ApplySecurity may have modified the query
         request.RequestUri = uriBuilder.Uri;
 
-        // 8. 发送请求
+        // 8. Send request
         return await SendRequestAsync(request, ct);
     }
 
@@ -165,7 +165,7 @@ public class ApiClient : IApiClient
 
             foreach (var (schemeObj, _) in requirement)
             {
-                var schemeName = schemeObj.Reference?.Id ?? schemeObj.Name; // 兼容引用的情况
+                var schemeName = schemeObj.Reference?.Id ?? schemeObj.Name; // handle both inline and $ref
 
                 if (string.IsNullOrWhiteSpace(schemeName) || !schemes.TryGetValue(schemeName, out var scheme))
                 {
@@ -230,7 +230,7 @@ public class ApiClient : IApiClient
                 if (!allSatisfied) break;
             }
 
-            if (allSatisfied) return; // 满足任意一组 security requirement 即可
+            if (allSatisfied) return; // any one satisfied requirement group is enough
         }
     }
 
@@ -238,7 +238,7 @@ public class ApiClient : IApiClient
     {
         try
         {
-            // 修复：传入 CancellationToken
+            // Pass CancellationToken to propagate cancellation
             var response = await _httpClient.SendAsync(request, ct);
             var responseBody = await response.Content.ReadAsStringAsync(ct);
 
