@@ -130,12 +130,12 @@ public class OperationMapperTests
     }
 
     [Fact]
-    public async Task MapToMcpTools_Whitelist_FiltersOperations()
+    public async Task MapToMcpTools_IncludePatterns_FiltersOperations()
     {
         var doc = await LoadFixtureAsync("petstore-openapi.json");
         var options = new OpenApiToMcpOptions
         {
-            Whitelist = new List<string> { "listPets" }
+            IncludePatterns = new List<string> { "listPets" }
         };
 
         var tools = _mapper.MapToMcpTools(doc, options);
@@ -145,12 +145,12 @@ public class OperationMapperTests
     }
 
     [Fact]
-    public async Task MapToMcpTools_Blacklist_FiltersOperations()
+    public async Task MapToMcpTools_ExcludePatterns_FiltersOperations()
     {
         var doc = await LoadFixtureAsync("petstore-openapi.json");
         var options = new OpenApiToMcpOptions
         {
-            Blacklist = new List<string> { "createPet" }
+            ExcludePatterns = new List<string> { "createPet" }
         };
 
         var tools = _mapper.MapToMcpTools(doc, options);

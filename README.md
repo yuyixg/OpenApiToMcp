@@ -50,7 +50,7 @@ Configure multiple OpenAPI specs, each exposed as an independent MCP service:
         "Name": "order-api",
         "SpecPath": "./specs/order-api.yaml",
         "TargetApiBaseUrl": "http://order-service:8080",
-        "Whitelist": ["list*", "get*"],
+        "IncludePatterns": ["list*", "get*"],
         "ApiKey": "your-api-key"
       }
     ]
@@ -103,8 +103,8 @@ Each endpoint in the `OpenApiToMcp:Endpoints` array supports:
 | `SpecPath` | string | **Required.** Path or URL to OpenAPI spec (JSON or YAML) |
 | `OverlayPaths` | string[] | Paths or URLs to OpenAPI Overlay files |
 | `TargetApiBaseUrl` | string | Override base server URL from spec |
-| `Whitelist` | string[] | Glob patterns to include operations (by operationId or METHOD:/path) |
-| `Blacklist` | string[] | Glob patterns to exclude operations (ignored if Whitelist set) |
+| `IncludePatterns` | string[] | Glob patterns to include operations (by operationId or METHOD:/path) |
+| `ExcludePatterns` | string[] | Glob patterns to exclude operations (ignored if IncludePatterns set) |
 | `ApiKey` | string | Default API key for authentication |
 | `SecurityCredentials` | object | Map of security scheme name → credential |
 | `CustomHeaders` | object | Custom HTTP headers for outgoing requests |
@@ -115,7 +115,7 @@ Each endpoint in the `OpenApiToMcp:Endpoints` array supports:
 - **OpenAPI 3.x** specification support (JSON and YAML)
 - **Multi-endpoint**: serve multiple API specs as independent MCP services from one host
 - **Overlay Specification v1.0.0** for modifying specs without changing the original
-- **Operation filtering** via whitelist/blacklist glob patterns
+- **Operation filtering** via include/exclude glob patterns
 - **x-mcp extensions** for custom tool names and descriptions
 - **Security schemes**: API key, HTTP Basic/Bearer, OAuth2, OpenID Connect
 - **Request/Response schema conversion** to JSON Schema 7

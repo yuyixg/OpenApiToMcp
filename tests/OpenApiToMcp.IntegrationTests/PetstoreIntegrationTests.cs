@@ -211,14 +211,14 @@ public class PetstoreIntegrationTests
     // --- Filtering Tests ---
 
     [Fact]
-    public async Task MapToMcpTools_WhitelistPet_FiltersCorrectly()
+    public async Task MapToMcpTools_IncludePatternsPet_FiltersCorrectly()
     {
         var doc = await LoadPetstoreAsync();
         var (_, mapper) = CreateServices();
         var options = new OpenApiToMcpOptions
         {
             TargetApiBaseUrl = BaseUrl,
-            Whitelist = new List<string> { "*Pet*", "*pet*" }
+            IncludePatterns = new List<string> { "*Pet*", "*pet*" }
         };
         var tools = mapper.MapToMcpTools(doc, options);
 
@@ -227,14 +227,14 @@ public class PetstoreIntegrationTests
     }
 
     [Fact]
-    public async Task MapToMcpTools_WhitelistByMethodPath_FiltersCorrectly()
+    public async Task MapToMcpTools_IncludePatternsByMethodPath_FiltersCorrectly()
     {
         var doc = await LoadPetstoreAsync();
         var (_, mapper) = CreateServices();
         var options = new OpenApiToMcpOptions
         {
             TargetApiBaseUrl = BaseUrl,
-            Whitelist = new List<string> { "GET:/pet/**" }
+            IncludePatterns = new List<string> { "GET:/pet/**" }
         };
         var tools = mapper.MapToMcpTools(doc, options);
 
@@ -247,7 +247,7 @@ public class PetstoreIntegrationTests
     }
 
     [Fact]
-    public async Task MapToMcpTools_BlacklistByName_ExcludesCorrectly()
+    public async Task MapToMcpTools_ExcludePatternsByName_ExcludesCorrectly()
     {
         var doc = await LoadPetstoreAsync();
         var (_, mapper) = CreateServices();
@@ -257,7 +257,7 @@ public class PetstoreIntegrationTests
         var options = new OpenApiToMcpOptions
         {
             TargetApiBaseUrl = BaseUrl,
-            Blacklist = new List<string> { "delete*" }
+            ExcludePatterns = new List<string> { "delete*" }
         };
         var filteredTools = mapper.MapToMcpTools(doc, options);
 
@@ -266,14 +266,14 @@ public class PetstoreIntegrationTests
     }
 
     [Fact]
-    public async Task MapToMcpTools_WhitelistMultiplePatterns_CombinesResults()
+    public async Task MapToMcpTools_IncludePatternsMultiple_CombinesResults()
     {
         var doc = await LoadPetstoreAsync();
         var (_, mapper) = CreateServices();
         var options = new OpenApiToMcpOptions
         {
             TargetApiBaseUrl = BaseUrl,
-            Whitelist = new List<string> { "getInventory", "loginUser" }
+            IncludePatterns = new List<string> { "getInventory", "loginUser" }
         };
         var tools = mapper.MapToMcpTools(doc, options);
 
@@ -369,7 +369,7 @@ public class PetstoreIntegrationTests
         {
             SpecPath = FixturePath("petstore-openapi.json"),
             TargetApiBaseUrl = BaseUrl,
-            Whitelist = new List<string> { "getPetById", "addPet", "getInventory" },
+            IncludePatterns = new List<string> { "getPetById", "addPet", "getInventory" },
             ApiKey = "test-api-key"
         };
 
@@ -392,7 +392,7 @@ public class PetstoreIntegrationTests
             Assert.False(string.IsNullOrEmpty(tool.CallInfo.ServerUrl));
         }
 
-        // Step 4: Verify tool names match whitelist
+        // Step 4: Verify tool names match include patterns
         var names = tools.Select(t => t.ToolInfo.Name).ToHashSet();
         Assert.Contains("getPetById", names);
         Assert.Contains("addPet", names);

@@ -24,12 +24,12 @@ public class OpenApiToMcpOptions
     /// <summary>
     /// Glob patterns for operationId or METHOD:/path to include. If set, only matching operations become MCP tools.
     /// </summary>
-    public List<string>? Whitelist { get; set; }
+    public List<string>? IncludePatterns { get; set; }
 
     /// <summary>
-    /// Glob patterns for operationId or METHOD:/path to exclude. Ignored if Whitelist is set.
+    /// Glob patterns for operationId or METHOD:/path to exclude. Ignored if IncludePatterns is set.
     /// </summary>
-    public List<string>? Blacklist { get; set; }
+    public List<string>? ExcludePatterns { get; set; }
 
     /// <summary>
     /// Credentials keyed by security scheme name (e.g., "ApiKeyAuth": "your-key").

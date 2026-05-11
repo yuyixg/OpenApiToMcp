@@ -10,8 +10,8 @@ var builder = WebApplication.CreateSlimBuilder(args);
 // Parse command line arguments
 string? specPath = null;
 string? targetUrl = null;
-string? whitelist = null;
-string? blacklist = null;
+string? includePatterns = null;
+string? excludePatterns = null;
 string? apiKey = null;
 string? securitySchemeName = null;
 string? securityCredentialsJson = null;
@@ -34,11 +34,11 @@ for (int i = 0; i < args.Length; i++)
         case "--targetUrl" or "-u":
             targetUrl = NextArg(args, ref i, "--targetUrl");
             break;
-        case "--whitelist" or "-w":
-            whitelist = NextArg(args, ref i, "--whitelist");
+        case "--include" or "-w":
+            includePatterns = NextArg(args, ref i, "--include");
             break;
-        case "--blacklist" or "-b":
-            blacklist = NextArg(args, ref i, "--blacklist");
+        case "--exclude" or "-b":
+            excludePatterns = NextArg(args, ref i, "--exclude");
             break;
         case "--apiKey":
             apiKey = NextArg(args, ref i, "--apiKey");
@@ -69,8 +69,8 @@ for (int i = 0; i < args.Length; i++)
 specPath ??= Environment.GetEnvironmentVariable("OPENAPI_SPEC_PATH");
 targetUrl ??= Environment.GetEnvironmentVariable("TARGET_API_BASE_URL");
 overlayPaths ??= Environment.GetEnvironmentVariable("OPENAPI_OVERLAY_PATHS");
-whitelist ??= Environment.GetEnvironmentVariable("MCP_WHITELIST_OPERATIONS");
-blacklist ??= Environment.GetEnvironmentVariable("MCP_BLACKLIST_OPERATIONS");
+includePatterns ??= Environment.GetEnvironmentVariable("MCP_INCLUDE_PATTERNS");
+excludePatterns ??= Environment.GetEnvironmentVariable("MCP_EXCLUDE_PATTERNS");
 apiKey ??= Environment.GetEnvironmentVariable("API_KEY");
 securitySchemeName ??= Environment.GetEnvironmentVariable("SECURITY_SCHEME_NAME");
 securityCredentialsJson ??= Environment.GetEnvironmentVariable("SECURITY_CREDENTIALS");
@@ -87,8 +87,8 @@ if (string.IsNullOrEmpty(specPath))
     Console.Error.WriteLine("  --spec, -s        Path or URL to OpenAPI spec (required)");
     Console.Error.WriteLine("  --overlays, -o    Comma-separated overlay paths or URLs");
     Console.Error.WriteLine("  --targetUrl, -u   Override API base URL");
-    Console.Error.WriteLine("  --whitelist, -w   Comma-separated glob patterns to include");
-    Console.Error.WriteLine("  --blacklist, -b   Comma-separated glob patterns to exclude");
+    Console.Error.WriteLine("  --include, -w     Comma-separated glob patterns to include");
+    Console.Error.WriteLine("  --exclude, -b     Comma-separated glob patterns to exclude");
     Console.Error.WriteLine("  --apiKey          API key for target API");
     Console.Error.WriteLine("  --headers         JSON string of custom headers");
     Console.Error.WriteLine("  --disableXMcp     Disable X-MCP: 1 header");
@@ -118,14 +118,14 @@ var overlayList = string.IsNullOrEmpty(overlayPaths)
     ? new List<string>()
     : overlayPaths.Split(',').Select(p => p.Trim()).Where(p => p.Length > 0).ToList();
 
-// Parse whitelist/blacklist
-List<string>? whitelistPatterns = string.IsNullOrEmpty(whitelist)
+// Parse include/exclude patterns
+List<string>? includePatternList = string.IsNullOrEmpty(includePatterns)
     ? null
-    : whitelist.Split(',').Select(p => p.Trim()).Where(p => p.Length > 0).ToList();
+    : includePatterns.Split(',').Select(p => p.Trim()).Where(p => p.Length > 0).ToList();
 
-List<string>? blacklistPatterns = string.IsNullOrEmpty(blacklist)
+List<string>? excludePatternList = string.IsNullOrEmpty(excludePatterns)
     ? null
-    : blacklist.Split(',').Select(p => p.Trim()).Where(p => p.Length > 0).ToList();
+    : excludePatterns.Split(',').Select(p => p.Trim()).Where(p => p.Length > 0).ToList();
 
 // Configure services
 builder.Services.AddOpenApiMcp(options =>
@@ -133,8 +133,8 @@ builder.Services.AddOpenApiMcp(options =>
     options.SpecPath = specPath;
     options.OverlayPaths = overlayList;
     options.TargetApiBaseUrl = targetUrl;
-    options.Whitelist = whitelistPatterns;
-    options.Blacklist = blacklistPatterns;
+    options.IncludePatterns = includePatternList;
+    options.ExcludePatterns = excludePatternList;
     options.ApiKey = apiKey;
     options.SecuritySchemeName = securitySchemeName;
     options.SecurityCredentials = securityCredentials;

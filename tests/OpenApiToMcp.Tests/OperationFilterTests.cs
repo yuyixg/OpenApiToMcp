@@ -13,11 +13,11 @@ public class OperationFilterTests
     }
 
     [Fact]
-    public void Whitelist_IncludesMatching_ExcludesOthers()
+    public void IncludePatterns_IncludesMatching_ExcludesOthers()
     {
         var options = new OpenApiToMcpOptions
         {
-            Whitelist = new List<string> { "list*", "create*" }
+            IncludePatterns = new List<string> { "list*", "create*" }
         };
 
         Assert.True(OperationFilter.ShouldInclude("listPets", "/pets", "get", options));
@@ -26,11 +26,11 @@ public class OperationFilterTests
     }
 
     [Fact]
-    public void Blacklist_ExcludesMatching_IncludesOthers()
+    public void ExcludePatterns_ExcludesMatching_IncludesOthers()
     {
         var options = new OpenApiToMcpOptions
         {
-            Blacklist = new List<string> { "delete*" }
+            ExcludePatterns = new List<string> { "delete*" }
         };
 
         Assert.True(OperationFilter.ShouldInclude("listPets", "/pets", "get", options));
@@ -38,12 +38,12 @@ public class OperationFilterTests
     }
 
     [Fact]
-    public void Whitelist_TakesPriorityOverBlacklist()
+    public void IncludePatterns_TakesPriorityOverExcludePatterns()
     {
         var options = new OpenApiToMcpOptions
         {
-            Whitelist = new List<string> { "list*" },
-            Blacklist = new List<string> { "listPets" }
+            IncludePatterns = new List<string> { "list*" },
+            ExcludePatterns = new List<string> { "listPets" }
         };
 
         Assert.True(OperationFilter.ShouldInclude("listPets", "/pets", "get", options));
@@ -55,7 +55,7 @@ public class OperationFilterTests
     {
         var options = new OpenApiToMcpOptions
         {
-            Whitelist = new List<string> { "GET:**" }
+            IncludePatterns = new List<string> { "GET:**" }
         };
 
         Assert.True(OperationFilter.ShouldInclude("listPets", "/pets", "get", options));
@@ -67,7 +67,7 @@ public class OperationFilterTests
     {
         var options = new OpenApiToMcpOptions
         {
-            Whitelist = new List<string> { "GET:/pets" }
+            IncludePatterns = new List<string> { "GET:/pets" }
         };
 
         Assert.True(OperationFilter.ShouldInclude(null, "/pets", "get", options));
